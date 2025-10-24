@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/images/cutin-logo.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.lungelodev.cutinapp"
     },
     "web": {
       "output": "static",

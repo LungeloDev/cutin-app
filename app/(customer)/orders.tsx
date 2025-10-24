@@ -13,9 +13,10 @@ import {
   query,
   where,
   orderBy,
-  getDocs,
+  onSnapshot,
   Timestamp,
 } from "firebase/firestore";
+
 import { db } from "@/services/firebase";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -37,21 +38,21 @@ export default function OrdersScreen() {
   useEffect(() => {
     if (!user) return;
 
-    const fetchOrders = async () => {
-      setLoading(true);
-      try {
-        const q = query(
-          collection(db, "orders"),
-          where("customerId", "==", user.uid),
-          orderBy("createdAt", "desc") // requires composite index
-        );
+    const q = query(
+      collection(db, "orders"),
+      where("customerId", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
 
-        const snap = await getDocs(q);
+    // ✅ Realtime listener
+    const unsubscribe = onSnapshot(
+      q,
+      (snap) => {
         const list: Order[] = snap.docs.map((doc) => {
           const data = doc.data() as any;
           return {
             id: doc.id,
-            orderNumber: data.orderNumber, // ✅ new field
+            orderNumber: data.orderNumber,
             merchantName: data.merchantName,
             total: data.total,
             status: data.status,
@@ -62,20 +63,18 @@ export default function OrdersScreen() {
           };
         });
         setOrders(list);
-      } catch (err: any) {
-        console.error("Failed to load orders:", err);
-        setError(
-          err.code === "failed-precondition"
-            ? "⚠️ Firestore index required. Click the console link to create it."
-            : "Failed to load orders. Please try again."
-        );
-      } finally {
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Realtime orders error:", err);
+        setError("⚠️ Failed to sync orders. Try again later.");
         setLoading(false);
       }
-    };
+    );
 
-    fetchOrders();
+    return () => unsubscribe();
   }, [user]);
+
 
   const renderOrder = ({ item }: { item: Order }) => (
     <View className="bg-white border border-gray-200 rounded-xl p-4 mb-3 shadow-sm">

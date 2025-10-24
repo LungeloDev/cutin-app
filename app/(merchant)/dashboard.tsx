@@ -17,7 +17,7 @@ import {
   query,
   where,
   orderBy,
-  getDocs,
+  onSnapshot,
   updateDoc,
   doc,
   Timestamp,
@@ -43,18 +43,15 @@ export default function MerchantDashboardScreen() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Stats
   const [stats, setStats] = useState({
     orders: 0,
     revenue: 0,
     customers: 0,
   });
 
-  // Modal
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  // 🔹 Date range based on filter
   function getDateRange(filter: FilterType) {
     const now = new Date();
     let past = new Date();
@@ -65,38 +62,40 @@ export default function MerchantDashboardScreen() {
     return past;
   }
 
-  // 🔹 Fetch orders from Firestore
+  // 🔹 Real-time Firestore listener
   useEffect(() => {
     if (!user) return;
-    const fetchOrders = async () => {
-      setLoading(true);
-      try {
-        const pastDate = getDateRange(filter);
 
-        const q = query(
-          collection(db, "orders"),
-          where("merchantId", "==", user.uid),
-          where("createdAt", ">=", Timestamp.fromDate(pastDate)),
-          orderBy("createdAt", "desc")
-        );
+    const pastDate = getDateRange(filter);
 
-        const snap = await getDocs(q);
+    const q = query(
+      collection(db, "orders"),
+      where("merchantId", "==", user.uid),
+      where("createdAt", ">=", Timestamp.fromDate(pastDate)),
+      orderBy("createdAt", "desc")
+    );
+
+    setLoading(true);
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snap) => {
         const list: Order[] = snap.docs.map((docSnap) => {
           const data = docSnap.data() as any;
           return {
             id: docSnap.id,
-            customerName: data.customerEmail || "Unknown",
+            customerName: data.customerEmail,
             amount: data.total || 0,
             status: data.status || "Pending",
             createdAt: data.createdAt?.toDate?.() || new Date(),
             items: data.items || [],
-            orderNumber: data.orderNumber
+            orderNumber: data.orderNumber,
           };
         });
 
         setOrders(list);
 
-        // Calculate stats
+        // Recalculate stats on every change
         const totalRevenue = list.reduce((sum, o) => sum + o.amount, 0);
         const uniqueCustomers = new Set(list.map((o) => o.customerName)).size;
 
@@ -105,17 +104,18 @@ export default function MerchantDashboardScreen() {
           revenue: totalRevenue,
           customers: uniqueCustomers,
         });
-      } catch (err) {
+
+        setLoading(false);
+      },
+      (err) => {
         console.error("Error fetching orders:", err);
-      } finally {
         setLoading(false);
       }
-    };
+    );
 
-    fetchOrders();
+    return () => unsubscribe();
   }, [user, filter]);
 
-  // ✅ Update order status
   const updateOrderStatus = async (orderId: string, status: string) => {
     try {
       await updateDoc(doc(db, "orders", orderId), { status });
@@ -130,7 +130,6 @@ export default function MerchantDashboardScreen() {
     }
   };
 
-  // ✅ Stat Card
   function StatCard({
     icon,
     label,
@@ -151,11 +150,12 @@ export default function MerchantDashboardScreen() {
     );
   }
 
-  // ✅ Order row
   const renderOrder = ({ item }: { item: Order }) => (
     <View className="flex-row justify-between items-center bg-white rounded-xl px-4 py-3 mb-3 shadow-sm">
       <View className="flex-1">
-        <Text className="font-semibold text-gray-900">{item.orderNumber}</Text>
+        <Text className="font-semibold text-gray-900">
+          {item.orderNumber ?? item.id}
+        </Text>
         <Text className="text-gray-600 text-sm">{item.customerName}</Text>
       </View>
       <Text className="text-gray-800 font-medium mr-3">
@@ -197,7 +197,6 @@ export default function MerchantDashboardScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      {/* Header */}
       <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-100">
         <Text className="text-xl font-bold text-gray-900">Dashboard</Text>
         <TouchableOpacity
@@ -213,11 +212,7 @@ export default function MerchantDashboardScreen() {
           <ActivityIndicator size="large" />
         </View>
       ) : (
-        <ScrollView
-          contentContainerStyle={{ padding: 16 }}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Filters */}
+        <ScrollView contentContainerStyle={{ padding: 16 }}>
           <View className="flex-row justify-between mb-6">
             {FILTERS.map((item) => (
               <TouchableOpacity
@@ -238,7 +233,6 @@ export default function MerchantDashboardScreen() {
             ))}
           </View>
 
-          {/* Stats */}
           <StatCard icon="cart-outline" label="Orders" value={stats.orders} />
           <StatCard
             icon="cash-outline"
@@ -251,7 +245,6 @@ export default function MerchantDashboardScreen() {
             value={stats.customers}
           />
 
-          {/* Orders */}
           <Text className="text-lg font-bold text-gray-900 mb-4 mt-6">
             Recent Orders
           </Text>
@@ -264,7 +257,7 @@ export default function MerchantDashboardScreen() {
         </ScrollView>
       )}
 
-      {/* Order Details Modal */}
+      {/* Modal for order details */}
       <Modal
         visible={modalVisible}
         transparent
@@ -295,7 +288,6 @@ export default function MerchantDashboardScreen() {
                   </Text>
                 ))}
 
-                {/* Status actions */}
                 <View className="flex-row justify-end mt-5">
                   {selectedOrder.status !== "Completed" && (
                     <TouchableOpacity

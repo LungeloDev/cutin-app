@@ -99,14 +99,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+
   const removeItem = (id: string) =>
     setCart((prev) => ({ ...prev, items: prev.items.filter((i) => i.id !== id) }));
 
   const changeQty = (id: string, qty: number) =>
-    setCart((prev) => ({
+  setCart((prev) => {
+    if (qty <= 0) {
+      // remove item completely if qty goes to 0
+      return {
+        ...prev,
+        items: prev.items.filter((i) => i.id !== id),
+      };
+    }
+    return {
       ...prev,
-      items: prev.items.map((i) => (i.id === id ? { ...i, qty: Math.max(1, qty) } : i)),
-    }));
+      items: prev.items.map((i) =>
+        i.id === id ? { ...i, qty } : i
+      ),
+    };
+  });
+
 
   const totals = useMemo(() => {
     const total = cart.items.reduce((sum, i) => sum + i.price * i.qty, 0);
