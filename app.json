@@ -12,14 +12,16 @@
       "supportsTablet": true
     },
     "android": {
+      "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/cutin-logo.png",
         "backgroundImage": "./assets/images/cutin-logo.png",
-        "monochromeImage": "./assets/images/cutin-logo.png"
+        "monochromeImage": "./assets/images/cutin-logo.png" 
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.lungelodev.cutinapp"
     },
     "web": {
       "output": "static",
