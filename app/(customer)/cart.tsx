@@ -9,45 +9,18 @@ import { db } from "@/services/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 export default function CartScreen() {
-  const { cart, total, totalQty, removeItem, clearCart } = useCart();
+  const { cart, total, totalQty, removeItem, clearCart, changeQty } = useCart();
   const { user } = useAuth();
   const items = cart.items ?? [];
 
   const VAT_RATE = 0.15; // 15% VAT
   const vatAmount = total * VAT_RATE;
-  const grandTotal = total + vatAmount;
+  const grandTotal = total;
 
-  const renderItem = ({ item }: any) => (
-    <View className="flex-row items-center justify-between bg-white rounded-xl p-4 mb-3 shadow-sm">
-      {/* Item Info */}
-      <View className="flex-1">
-        <Text className="text-gray-900 font-semibold">{item.name}</Text>
-        <Text className="text-gray-600 text-sm">R {item.price.toFixed(2)}</Text>
-      </View>
-
-      {/* Qty */}
-      <Text className="text-gray-700 font-medium mr-3">x{item.qty}</Text>
-
-      {/* Remove button */}
-      <TouchableOpacity
-        onPress={() => removeItem(item.id)}
-        className="bg-red-100 px-3 py-2 rounded-lg"
-      >
-        <Ionicons name="trash-outline" size={18} color="#DC2626" />
-      </TouchableOpacity>
-    </View>
-  );
-
+  // ✅ Random 3-digit human friendly order number
   const generateOrderNumber = () => {
-    // Format: ORD-YYYYMMDD-HHMMSS
-    const now = new Date();
-    const datePart = `${now.getFullYear()}${String(
-      now.getMonth() + 1
-    ).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
-    const timePart = `${String(now.getHours()).padStart(2, "0")}${String(
-      now.getMinutes()
-    ).padStart(2, "0")}${String(now.getSeconds()).padStart(2, "0")}`;
-    return `ORD-${datePart}-${timePart}`;
+    const random = Math.floor(Math.random() * 900) + 100; // 100–999
+    return `ORD-${random}`;
   };
 
   const handleCheckout = async () => {
@@ -60,12 +33,13 @@ export default function CartScreen() {
       const orderNumber = generateOrderNumber();
 
       const orderData = {
-        orderNumber, // ✅ human-friendly number
+        orderNumber,
         customerId: user.uid,
         customerEmail: user.email,
+        customerName: user.displayName || "Guest",
         merchantId: cart.merchantId,
         merchantName: cart.merchantName,
-        items: items,
+        items,
         subtotal: total,
         vat: vatAmount,
         total: grandTotal,
@@ -87,6 +61,45 @@ export default function CartScreen() {
       Alert.alert("❌ Failed", error.message);
     }
   };
+
+  // ✅ Render each cart item
+  const renderItem = ({ item }: any) => (
+    <View className="flex-row items-center justify-between bg-white rounded-xl p-4 mb-3 shadow-sm">
+      {/* Item Info */}
+      <View className="flex-1">
+        <Text className="text-gray-900 font-semibold">{item.name}</Text>
+        <Text className="text-gray-600 text-sm">R {item.price.toFixed(2)}</Text>
+      </View>
+
+      {/* Qty controls */}
+      <View className="flex-row items-center">
+        <TouchableOpacity
+          onPress={() => changeQty(item.id, item.qty - 1)}
+          className="bg-gray-200 px-2 py-1 rounded-lg"
+        >
+          <Ionicons name="remove" size={18} color="#111827" />
+        </TouchableOpacity>
+
+        <Text className="text-gray-700 font-medium mx-3">{item.qty}</Text>
+
+        <TouchableOpacity
+          onPress={() => changeQty(item.id, item.qty + 1)}
+          className="bg-gray-200 px-2 py-1 rounded-lg"
+        >
+          <Ionicons name="add" size={18} color="#111827" />
+        </TouchableOpacity>
+
+      </View>
+
+      {/* Remove button */}
+      <TouchableOpacity
+        onPress={() => removeItem(item.id)}
+        className="bg-red-100 px-3 py-2 rounded-lg ml-3"
+      >
+        <Ionicons name="trash-outline" size={18} color="#DC2626" />
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -118,18 +131,6 @@ export default function CartScreen() {
       {/* Cart Summary + Checkout */}
       {items.length > 0 && (
         <View className="absolute left-0 right-0 bottom-0 bg-white border-t border-gray-200 px-6 py-4 shadow-lg">
-          <View className="flex-row justify-between mb-1">
-            <Text className="text-gray-600">Subtotal</Text>
-            <Text className="text-gray-900 font-medium">
-              R {total.toFixed(2)}
-            </Text>
-          </View>
-          <View className="flex-row justify-between mb-1">
-            <Text className="text-gray-600">VAT (15%)</Text>
-            <Text className="text-gray-900 font-medium">
-              R {vatAmount.toFixed(2)}
-            </Text>
-          </View>
           <View className="flex-row justify-between mb-4">
             <Text className="text-lg font-bold text-gray-900">Total</Text>
             <Text className="text-lg font-bold text-gray-900">
