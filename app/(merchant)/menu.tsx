@@ -7,6 +7,10 @@ import {
   TouchableOpacity,
   Modal,
   Image,
+  Alert,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
@@ -17,8 +21,10 @@ import {
   addMenuItem,
   toggleMenuItemAvailability,
   uploadMenuImage,
-} from "@/services/merchant.service";
+  deleteMenuItem,
+} from "@/services/merchant.service"; // <-- ensure deleteMenuItem exists
 import { useAuth } from "@/hooks/use-auth";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function MenuScreen() {
   const { user } = useAuth();
@@ -83,6 +89,22 @@ export default function MenuScreen() {
     );
   };
 
+  const handleDeleteItem = async (itemId: string) => {
+    if (!user) return;
+
+    Alert.alert("Delete Item", "Are you sure you want to delete this item?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          await deleteMenuItem(user.uid, itemId);
+          setMenuItems(menuItems.filter((i) => i.id !== itemId));
+        },
+      },
+    ]);
+  };
+
   return (
     <View className="flex-1 bg-white relative px-6">
       {/* Waves */}
@@ -122,7 +144,7 @@ export default function MenuScreen() {
               {item.imageUrl && (
                 <Image
                   source={{ uri: item.imageUrl }}
-                  className="w-12 h-12 rounded-lg "
+                  className="w-12 h-12 rounded-lg"
                 />
               )}
               <View className="px-4">
@@ -133,16 +155,26 @@ export default function MenuScreen() {
               </View>
             </View>
 
-            <TouchableOpacity
-              onPress={() => handleToggleAvailability(item.id, item.available)}
-              className={`px-4 py-2 rounded-lg ${
-                item.available ? "bg-green-500" : "bg-red-500"
-              }`}
-            >
-              <Text className="text-white font-medium">
-                {item.available ? "In Stock" : "Out"}
-              </Text>
-            </TouchableOpacity>
+            {/* Availability + Delete */}
+            <View className="flex-row items-center">
+              <TouchableOpacity
+                onPress={() => handleToggleAvailability(item.id, item.available)}
+                className={`px-4 py-2 rounded-lg ${item.available ? "bg-green-500" : "bg-red-500"
+                  }`}
+              >
+                <Text className="text-white font-medium">
+                  {item.available ? "In Stock" : "Out"}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => handleDeleteItem(item.id)}
+                className="p-2 bg-red-100 rounded-lg ml-3"
+              >
+                <Ionicons name="trash" size={20} color="#DC2626" />
+              </TouchableOpacity>
+            </View>
+
           </View>
         )}
       />
@@ -166,70 +198,81 @@ export default function MenuScreen() {
       {/* Add Item Modal */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View className="flex-1 bg-black/50 justify-center items-center">
-          <View className="w-11/12 bg-white p-6 rounded-2xl shadow-lg">
-            <Text className="text-xl font-bold mb-4">Add Menu Item</Text>
-
-            <TextInput
-              placeholder="Item Name"
-              placeholderTextColor="#9CA3AF"
-              value={newItemName}
-              onChangeText={setNewItemName}
-              className="w-full bg-gray-100 border border-gray-200 rounded-xl px-4 py-4 mb-4 text-base text-gray-900 shadow-sm"
-            />
-
-            <TextInput
-              placeholder="Price"
-              placeholderTextColor="#9CA3AF"
-              value={newItemPrice}
-              onChangeText={setNewItemPrice}
-              className="w-full bg-gray-100 border border-gray-200 rounded-xl px-4 py-4 mb-6 text-base text-gray-900 shadow-sm"
-              keyboardType="numeric"
-            />
-
-            {/* Image Picker */}
-            <TouchableOpacity
-              onPress={handlePickImage}
-              className="w-full h-40 bg-gray-100 border border-gray-200 rounded-xl mb-6 justify-center items-center"
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            className="w-11/12"
+          >
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{
+                backgroundColor: "white",
+                padding: 20,
+                borderRadius: 20,
+              }}
             >
-              {imageUri ? (
-                <Image
-                  source={{ uri: imageUri }}
-                  className="w-full h-full rounded-xl"
-                />
-              ) : (
-                <Text className="text-gray-500">+ Pick Image</Text>
-              )}
-            </TouchableOpacity>
+              <Text className="text-xl font-bold mb-4">Add Menu Item</Text>
 
-            {/* Action Buttons */}
-            <View className="flex-row justify-between">
+              <TextInput
+                placeholder="Item Name"
+                placeholderTextColor="#9CA3AF"
+                value={newItemName}
+                onChangeText={setNewItemName}
+                className="w-full bg-gray-100 border border-gray-200 rounded-xl px-4 py-4 mb-4 text-base text-gray-900 shadow-sm"
+              />
+
+              <TextInput
+                placeholder="Price"
+                placeholderTextColor="#9CA3AF"
+                value={newItemPrice}
+                onChangeText={setNewItemPrice}
+                className="w-full bg-gray-100 border border-gray-200 rounded-xl px-4 py-4 mb-6 text-base text-gray-900 shadow-sm"
+                keyboardType="numeric"
+              />
+
               <TouchableOpacity
-                onPress={() => setModalVisible(false)}
-                className="flex-1 mr-2 h-12 bg-gray-200 rounded-xl justify-center items-center"
+                onPress={handlePickImage}
+                className="w-full h-40 bg-gray-100 border border-gray-200 rounded-xl mb-6 justify-center items-center"
               >
-                <Text className="text-gray-700 font-medium">Cancel</Text>
+                {imageUri ? (
+                  <Image
+                    source={{ uri: imageUri }}
+                    className="w-full h-full rounded-xl"
+                  />
+                ) : (
+                  <Text className="text-gray-500">+ Pick Image</Text>
+                )}
               </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={handleAddItem}
-                className="flex-1 ml-2 h-12 rounded-xl overflow-hidden"
-                activeOpacity={0.85}
-              >
-                <LinearGradient
-                  colors={["#0F172A", "#1E3A8A", "#3B82F6"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={{
-                    flex: 1,
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
+              {/* Buttons */}
+              <View className="flex-row justify-between">
+                <TouchableOpacity
+                  onPress={() => setModalVisible(false)}
+                  className="flex-1 mr-2 h-12 bg-gray-200 rounded-xl justify-center items-center"
                 >
-                  <Text className="text-white font-semibold">Add</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </View>
+                  <Text className="text-gray-700 font-medium">Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleAddItem}
+                  className="flex-1 ml-2 h-12 rounded-xl overflow-hidden"
+                  activeOpacity={0.85}
+                >
+                  <LinearGradient
+                    colors={["#0F172A", "#1E3A8A", "#3B82F6"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{
+                      flex: 1,
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text className="text-white font-semibold">Add</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
     </View>

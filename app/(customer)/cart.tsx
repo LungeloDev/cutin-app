@@ -6,7 +6,7 @@ import { useCart } from "@/context/cart-context";
 import { router } from "expo-router";
 import { useAuth } from "@/hooks/use-auth";
 import { db } from "@/services/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 
 export default function CartScreen() {
   const { cart, total, totalQty, removeItem, clearCart, changeQty } = useCart();
@@ -47,8 +47,36 @@ export default function CartScreen() {
         createdAt: serverTimestamp(),
       };
 
-      await addDoc(collection(db, "orders"), orderData);
+      // 1️⃣ Save order in Firestore
+      const docRef = await addDoc(collection(db, "orders"), orderData);
 
+      // 2️⃣ Get merchant push token
+      if (!cart.merchantId) {
+        throw new Error("Merchant ID is missing");
+      }
+      const merchantRef = doc(db, "users", cart.merchantId);
+      const merchantSnap = await getDoc(merchantRef);
+      const merchantToken = merchantSnap.data()?.expoPushToken;
+
+      // 3️⃣ Send push notification to merchant
+      if (merchantToken) {
+        await fetch("https://exp.host/--/api/v2/push/send", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            to: merchantToken,
+            sound: "default",
+            title: "🍽️ New Order Received!",
+            body: `Order ${orderNumber} has been placed.`,
+            data: { orderId: docRef.id, orderNumber },
+          }),
+        });
+      }
+
+      // 4️⃣ Clear cart + navigate
       clearCart();
       router.replace("/(customer)/orders");
 
@@ -56,11 +84,13 @@ export default function CartScreen() {
         "✅ Order placed!",
         `Your order (${orderNumber}) has been created. Please pay in store at ${cart.merchantName}.`
       );
+
     } catch (error: any) {
       console.error("Checkout error:", error);
       Alert.alert("❌ Failed", error.message);
     }
   };
+
 
   // ✅ Render each cart item
   const renderItem = ({ item }: any) => (

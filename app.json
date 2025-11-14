@@ -12,12 +12,12 @@
       "supportsTablet": true
     },
     "android": {
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/cutin-logo.png",
         "backgroundImage": "./assets/images/cutin-logo.png",
-        "monochromeImage": "./assets/images/cutin-logo.png" 
+        "monochromeImage": "./assets/images/cutin-logo.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -40,6 +40,13 @@
           "dark": {
             "backgroundColor": "#000000"
           }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#1E3A8A"
         }
       ]
     ],

@@ -9,7 +9,7 @@ import BackgroundWaves from "@/components/ui/BackgroundWaves";
 export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"customer" | "merchant">("customer");
+  const [role, setRole] = useState<"customer" | "merchant">("merchant");
   const [error, setError] = useState("");
 
   const handleRegister = async () => {
@@ -122,7 +122,7 @@ export default function RegisterScreen() {
         onPress={() => router.push("/(auth)/login")}
         className="mt-6"
       >
-        <Text className="text-blue-700 text-sm font-medium">
+        <Text className="text-blue-700 text-xl font-medium">
           Already have an account? Login
         </Text>
       </TouchableOpacity>

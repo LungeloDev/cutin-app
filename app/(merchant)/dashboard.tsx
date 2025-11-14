@@ -23,6 +23,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/services/firebase";
+import { useNotifications } from "@/hooks/useNotifications";
 
 const FILTERS = ["Weekly", "Monthly", "3 Months", "6 Months"];
 type FilterType = typeof FILTERS[number];
@@ -51,6 +52,8 @@ export default function MerchantDashboardScreen() {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  useNotifications(); // Register for notifications
 
   function getDateRange(filter: FilterType) {
     const now = new Date();

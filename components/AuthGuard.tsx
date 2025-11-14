@@ -9,7 +9,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.replace("/(auth)/login");
+        router.replace("/(auth)/register");
       } else if (role === "merchant") {
         router.replace("/(merchant)/dashboard");
       } else {

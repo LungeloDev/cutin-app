@@ -19,6 +19,15 @@ export default function MerchantLayout() {
         }}
       />
       <Tabs.Screen
+        name="finances"
+        options={{
+          title: "Finances",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="wallet-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="menu"
         options={{
           title: "Menu",

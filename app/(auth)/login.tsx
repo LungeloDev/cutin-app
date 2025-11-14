@@ -91,7 +91,7 @@ export default function LoginScreen() {
         onPress={() => router.push("/(auth)/register")}
         className="mt-6"
       >
-        <Text className="text-blue-700 text-sm font-medium">
+        <Text className="text-blue-700 text-xl font-medium">
           Don’t have an account? Register
         </Text>
       </TouchableOpacity>
