@@ -23,7 +23,8 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/services/firebase";
-import { useNotifications } from "@/hooks/useNotifications";
+import { useNotifications } from "@/context/notification-context";
+import { showOrderNotification } from "@/services/notification.service";
 
 const FILTERS = ["Weekly", "Monthly", "3 Months", "6 Months"];
 type FilterType = typeof FILTERS[number];
@@ -53,7 +54,37 @@ export default function MerchantDashboardScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  useNotifications(); // Register for notifications
+  const { hasPermission } = useNotifications();
+
+  // Listen for new orders and show notifications
+  useEffect(() => {
+    if (!user || !hasPermission) return;
+
+    const q = query(
+      collection(db, "orders"),
+      where("merchantId", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === "added") {
+          const data = change.doc.data();
+          const isNewOrder = Date.now() - data.createdAt?.toMillis() < 10000; // Within 10 seconds
+          
+          if (isNewOrder) {
+            showOrderNotification({
+              customerName: data.customerEmail || "Customer",
+              items: data.items?.map((item: any) => item.name) || [],
+              total: data.total || 0,
+            });
+          }
+        }
+      });
+    });
+
+    return () => unsubscribe();
+  }, [user, hasPermission]);
 
   function getDateRange(filter: FilterType) {
     const now = new Date();

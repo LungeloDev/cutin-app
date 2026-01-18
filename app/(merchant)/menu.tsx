@@ -44,11 +44,35 @@ export default function MenuScreen() {
   }, [user]);
 
   const handlePickImage = async () => {
+    Alert.alert(
+      "Select Photo",
+      "Choose how you want to select a photo",
+      [
+        { text: "Camera", onPress: () => openCamera() },
+        { text: "Gallery", onPress: () => openGallery() },
+        { text: "Cancel", style: "cancel" }
+      ]
+    );
+  };
+
+  const openCamera = async () => {
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
+
+  const openGallery = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.7,
+      aspect: [1, 1],
+      quality: 0.8,
     });
     if (!result.canceled) {
       setImageUri(result.assets[0].uri);
@@ -139,42 +163,49 @@ export default function MenuScreen() {
         data={menuItems}
         keyExtractor={(item, index) => item.id || index.toString()}
         renderItem={({ item }) => (
-          <View className="flex-row justify-between items-center bg-gray-100 rounded-xl p-4 mb-4 shadow-sm">
-            <View className="flex-row items-center space-x-3">
-              {item.imageUrl && (
+          <View className="flex-row items-center bg-white rounded-xl p-4 mb-3 shadow-sm">
+            <View className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden mr-3">
+              {item.imageUrl ? (
                 <Image
                   source={{ uri: item.imageUrl }}
-                  className="w-12 h-12 rounded-lg"
+                  className="w-full h-full"
+                  resizeMode="cover"
                 />
+              ) : (
+                <View className="w-full h-full items-center justify-center">
+                  <Ionicons name="restaurant-outline" size={20} color="#94a3b8" />
+                </View>
               )}
-              <View className="px-4">
-                <Text className="text-lg font-semibold text-gray-900">
-                  {item.name}
-                </Text>
-                <Text className="text-gray-500">R{item.price.toFixed(2)}</Text>
-              </View>
             </View>
 
-            {/* Availability + Delete */}
+            <View className="flex-1">
+              <Text className="text-gray-900 font-semibold" numberOfLines={2}>
+                {item.name}
+              </Text>
+              <Text className="text-gray-900 font-bold mt-1">
+                R{item.price.toFixed(2)}
+              </Text>
+            </View>
+
             <View className="flex-row items-center">
               <TouchableOpacity
                 onPress={() => handleToggleAvailability(item.id, item.available)}
-                className={`px-4 py-2 rounded-lg ${item.available ? "bg-green-500" : "bg-red-500"
-                  }`}
+                className={`px-3 py-2 rounded-lg mr-2 ${
+                  item.available ? "bg-green-500" : "bg-red-500"
+                }`}
               >
-                <Text className="text-white font-medium">
+                <Text className="text-white font-medium text-sm">
                   {item.available ? "In Stock" : "Out"}
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={() => handleDeleteItem(item.id)}
-                className="p-2 bg-red-100 rounded-lg ml-3"
+                className="p-2 bg-red-100 rounded-lg"
               >
-                <Ionicons name="trash" size={20} color="#DC2626" />
+                <Ionicons name="trash" size={18} color="#DC2626" />
               </TouchableOpacity>
             </View>
-
           </View>
         )}
       />
@@ -231,15 +262,19 @@ export default function MenuScreen() {
 
               <TouchableOpacity
                 onPress={handlePickImage}
-                className="w-full h-40 bg-gray-100 border border-gray-200 rounded-xl mb-6 justify-center items-center"
+                className="w-32 h-32 bg-gray-100 border-2 border-dashed border-gray-300 rounded-full mb-6 justify-center items-center self-center"
               >
                 {imageUri ? (
                   <Image
                     source={{ uri: imageUri }}
-                    className="w-full h-full rounded-xl"
+                    className="w-full h-full rounded-full"
+                    resizeMode="cover"
                   />
                 ) : (
-                  <Text className="text-gray-500">+ Pick Image</Text>
+                  <View className="items-center">
+                    <Ionicons name="camera-outline" size={32} color="#9CA3AF" />
+                    <Text className="text-gray-500 text-sm mt-2">Add Photo</Text>
+                  </View>
                 )}
               </TouchableOpacity>
 

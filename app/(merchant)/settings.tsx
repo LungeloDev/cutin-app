@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import MaskedView from "@react-native-masked-view/masked-view";
@@ -45,15 +46,38 @@ export default function MerchantSettingsScreen() {
   }, [user]);
 
   const pickBanner = async () => {
+    Alert.alert(
+      "Select Banner Photo",
+      "Choose how you want to select a banner photo",
+      [
+        { text: "Camera", onPress: () => openCamera() },
+        { text: "Gallery", onPress: () => openGallery() },
+        { text: "Cancel", style: "cancel" }
+      ]
+    );
+  };
+
+  const openCamera = async () => {
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      await uploadBanner(result.assets[0].uri);
+    }
+  };
+
+  const openGallery = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
+      aspect: [16, 9],
       quality: 0.8,
     });
-
     if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      await uploadBanner(uri);
+      await uploadBanner(result.assets[0].uri);
     }
   };
 
@@ -137,22 +161,22 @@ export default function MerchantSettingsScreen() {
 
         {/* Banner Upload */}
         <View className="items-center mb-8">
-          {bannerUrl ? (
-            <Image
-              source={{ uri: bannerUrl }}
-              className="w-full h-40 rounded-xl mb-4"
-              resizeMode="cover"
-            />
-          ) : (
-            <View className="w-full h-40 bg-gray-200 rounded-xl mb-4 items-center justify-center">
-              <Text className="text-gray-500">No Banner Selected</Text>
-            </View>
-          )}
           <TouchableOpacity
             onPress={pickBanner}
-            className="px-6 py-3 bg-blue-600 rounded-xl"
+            className="w-full h-40 bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl mb-4 justify-center items-center overflow-hidden"
           >
-            <Text className="text-white font-semibold">Upload Banner</Text>
+            {bannerUrl ? (
+              <Image
+                source={{ uri: bannerUrl }}
+                className="w-full h-full"
+                resizeMode="cover"
+              />
+            ) : (
+              <View className="items-center">
+                <Text className="text-gray-500 text-lg font-medium">📸 Add Banner Photo</Text>
+                <Text className="text-gray-400 text-sm mt-1">Tap to select from camera or gallery</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
 

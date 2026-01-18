@@ -1,27 +1,48 @@
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { getUserRole, loginUser } from "@/services/auth";
 import { router } from "expo-router";
 import BackgroundWaves from "@/components/ui/BackgroundWaves";
+import { validateEmail } from "@/utils/validation";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    setError("");
+    
+    if (!validateEmail(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
     try {
       await loginUser(email, password);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
 
   return (
-    <View className="flex-1 bg-white justify-center items-center px-6 relative">
+    <KeyboardAvoidingView 
+      className="flex-1" 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <View className="flex-1 bg-white justify-center items-center px-6 relative">
       {/* Signature Waves */}
       <BackgroundWaves />
 
@@ -71,7 +92,10 @@ export default function LoginScreen() {
       {/* Login Button */}
       <TouchableOpacity
         onPress={handleLogin}
-        className="w-full h-14 rounded-xl overflow-hidden shadow-lg mt-4"
+        disabled={loading}
+        className={`w-full h-14 rounded-xl overflow-hidden shadow-lg mt-4 ${
+          loading ? "opacity-50" : ""
+        }`}
         activeOpacity={0.8}
       >
         <LinearGradient
@@ -80,7 +104,9 @@ export default function LoginScreen() {
           end={{ x: 1, y: 1 }}
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }} // ✅ fill parent
         >
-          <Text className="text-white font-semibold text-lg">Login</Text>
+          <Text className="text-white font-semibold text-lg">
+          {loading ? "Logging in..." : "Login"}
+        </Text>
         </LinearGradient>
       </TouchableOpacity>
 
@@ -96,6 +122,7 @@ export default function LoginScreen() {
         </Text>
       </TouchableOpacity>
       
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }

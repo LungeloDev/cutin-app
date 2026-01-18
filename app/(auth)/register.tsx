@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { registerUser } from "@/services/auth";
 import { router } from "expo-router";
@@ -21,7 +21,11 @@ export default function RegisterScreen() {
 };
 
   return (
-    <View className="flex-1 bg-white justify-center items-center px-6 relative">
+    <KeyboardAvoidingView 
+      className="flex-1" 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <View className="flex-1 bg-white justify-center items-center px-6 relative">
       {/* Signature Waves */}
             <BackgroundWaves />
 
@@ -127,5 +131,6 @@ export default function RegisterScreen() {
         </Text>
       </TouchableOpacity>
     </View>
+    </KeyboardAvoidingView>
   );
 }

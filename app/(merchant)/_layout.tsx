@@ -1,14 +1,16 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { NotificationProvider } from "@/context/notification-context";
 
 export default function MerchantLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: "#1E3A8A",
-      }}
-    >
+    <NotificationProvider>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: "#1E3A8A",
+        }}
+      >
       <Tabs.Screen
         name="dashboard"
         options={{
@@ -51,5 +53,6 @@ export default function MerchantLayout() {
       <Tabs.Screen name="order-detail" options={{ href: null }} />
       <Tabs.Screen name="orders" options={{ href: null }} />
     </Tabs>
+    </NotificationProvider>
   );
 }
