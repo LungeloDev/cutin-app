@@ -4,21 +4,21 @@
     "slug": "cutin-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/cutin-logo.png",
+    "icon": "./assets/images/logo.png",
     "scheme": "cutinapp",
     "userInterfaceStyle": "automatic",
-    "jsEngine": "jsc",
+    "jsEngine": "hermes",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
     "android": {
-      "versionCode": 3,
+      "versionCode": 5,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/cutin-logo.png",
-        "backgroundImage": "./assets/images/cutin-logo.png",
-        "monochromeImage": "./assets/images/cutin-logo.png"
+        "foregroundImage": "./assets/images/logo.png",
+        "backgroundImage": "./assets/images/logo.png",
+        "monochromeImage": "./assets/images/logo.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -27,7 +27,7 @@
     "web": {
       "output": "static",
       "bundler": "metro",
-      "favicon": "./assets/images/cutin-logo.png"
+      "favicon": "./assets/images/logo.png"
     },
     "plugins": [
       "expo-router",
@@ -46,7 +46,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/notification-icon.png",
+          "icon": "./assets/images/logo.png",
           "color": "#1E3A8A"
         }
       ],

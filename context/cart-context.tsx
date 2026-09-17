@@ -4,10 +4,14 @@ import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type CartItem = {
-  id: string;           // menu item id
+  id: string;
   name: string;
   price: number;
   qty: number;
+
+  productId?: string;
+  imageUrl?: string;
+  category?: string;
 };
 
 type CartState = {
@@ -41,12 +45,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       try {
         const raw = await AsyncStorage.getItem(STORAGE_KEY);
         if (raw) setCart(JSON.parse(raw));
-      } catch {}
+      } catch { }
     })();
   }, []);
 
   useEffect(() => {
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(cart)).catch(() => {});
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(cart)).catch(() => { });
   }, [cart]);
 
   const clearCart = () =>
@@ -104,21 +108,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCart((prev) => ({ ...prev, items: prev.items.filter((i) => i.id !== id) }));
 
   const changeQty = (id: string, qty: number) =>
-  setCart((prev) => {
-    if (qty <= 0) {
-      // remove item completely if qty goes to 0
+    setCart((prev) => {
+      if (qty <= 0) {
+        // remove item completely if qty goes to 0
+        return {
+          ...prev,
+          items: prev.items.filter((i) => i.id !== id),
+        };
+      }
       return {
         ...prev,
-        items: prev.items.filter((i) => i.id !== id),
+        items: prev.items.map((i) =>
+          i.id === id ? { ...i, qty } : i
+        ),
       };
-    }
-    return {
-      ...prev,
-      items: prev.items.map((i) =>
-        i.id === id ? { ...i, qty } : i
-      ),
-    };
-  });
+    });
 
 
   const totals = useMemo(() => {
